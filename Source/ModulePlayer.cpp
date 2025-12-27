@@ -3,6 +3,8 @@
 #include "ModulePlayer.h"
 #include "ModulePhysics.h"
 #include "ModuleGame.h"
+#include "ModuleMap.h"
+#include "CarProperties.h"
 ModulePlayer::ModulePlayer(Application* app, bool start_enabled) : Module(app, start_enabled)
 {
 }
@@ -20,24 +22,44 @@ bool ModulePlayer::Start()
    
     int frameWidth = 26;
     int frameHeight = 43;
-    x = 100;
-    y = 300;
+    x = App->map->playerSpawnPoint.x;
+    y = App->map->playerSpawnPoint.y;
+
+    if (x == 0 && y == 0) {
+        x = 100; // ƒ¨»œ÷µ
+        y = 300;
+        LOG("Warning: No PlayerStart found in map, using default.");
+    }
+
     pbody = App->physics->CreateRectangle(x, y, frameWidth, frameHeight, 1, 0xFFFF);
 
     this->width = frameWidth;
     this->height = frameHeight;
-	if (pbody != nullptr)
-	{
+
+    if (pbody != nullptr)
+    {
         pbody->listener = this;
-		// Damping: "Freno" natural. Si sueltas el gas, el coche para.
-		pbody->body->SetLinearDamping(0.2f);  // FricciÛn de movimiento
-		pbody->body->SetAngularDamping(2.0f); // FricciÛn de rotaciÛn
-	}
+        //  π”√ CarStats ÷–∂®“ÂµƒÕ≥“ª ˝÷µ
+        pbody->body->SetLinearDamping(CarStats::LINEAR_DAMPING);
+        pbody->body->SetAngularDamping(CarStats::ANGULAR_DAMPING);
 
-	// Ajustar variables de velocidad
-	speed = 7.0f;       // Fuerza de aceleraciÛn
-	turn_speed = 3.0f;   // Velocidad de giro
+        // ªÒ»°≤¢–ﬁ∏ƒ Fixture  Ù–‘ (”∞œÏ÷ ¡ø∫Õ≈ˆ◊≤∑¥”¶)
+        b2Fixture* fixture = pbody->body->GetFixtureList();
+        if (fixture) {
+            fixture->SetDensity(CarStats::DENSITY);
+            fixture->SetFriction(CarStats::FRICTION);
+            fixture->SetRestitution(CarStats::RESTITUTION);
+            pbody->body->ResetMassData(); // –ﬁ∏ƒ√‹∂»∫Û±ÿ–Î÷ÿ÷√
+        }
+    }
 
+    //  π”√ CarStats ÷–∂®“Âµƒ∂Ø¡¶ ˝÷µ
+    speed = CarStats::ACCELERATION;
+    turn_speed = CarStats::STEERING_SPEED;
+
+
+    currentMaxSpeed = CarStats::MAX_SPEED; // ≥ı ºÀŸ∂»
+    boostTimer = 0;
 	return true;
 }
 
@@ -48,126 +70,96 @@ bool ModulePlayer::CleanUp()
     UnloadTexture(texture);
 	return true;
 }
-
-
 update_status ModulePlayer::Update()
 {
-    if (App->game != nullptr && App->game->game_over == true)
-    {
-        return UPDATE_CONTINUE;
-    }
+    if (App->game != nullptr && App->game->game_over == true) return UPDATE_CONTINUE;
 
     if (pbody != nullptr)
     {
+        // 1. ¥¶¿Ìº”ÀŸº∆ ±¬ﬂº≠
+        if (boostTimer > 0) {
+            boostTimer--;
+            if (boostTimer == 0) {
+                currentMaxSpeed = CarStats::MAX_SPEED; //  ±º‰µΩ£¨ª÷∏¥‘≠ ºÀŸ∂»
+                LOG("Speed normal");
+            }
+        }
+
+        // 2.  π”√ currentMaxSpeed ∂¯≤ª «πÃ∂®÷µ
+        // »Áπ˚ currentMaxSpeed ªπ√ª≥ı ºªØ£¨æÕ‘⁄ Start ¿Ô…Ë÷√ currentMaxSpeed = CarStats::MAX_SPEED
+        float maxSpeed = currentMaxSpeed;
+
+
+
+
+
+
         b2Body* b = pbody->body;
 
-        // ----------------------------------------------------------------
-        // 1. FRICCI”N LATERAL (NEUM¡TICOS)
-        // ----------------------------------------------------------------
-        // Elimina la velocidad lateral para que el coche vaya hacia donde mira
-        // y no "derrape" como si estuviera en hielo.
-
+        // 1. OBTENER DIRECCI?N Y VELOCIDAD
         float currentAngle = b->GetAngle();
-        // Calculamos el vector "hacia adelante" seg˙n el ·ngulo del coche
+        // IMPORTANTE: Esta f®Ærmula debe ser igual en la IA
         b2Vec2 forwardDir = { (float)sin(currentAngle), (float)-cos(currentAngle) };
-
-        // Velocidad actual del cuerpo
         b2Vec2 currentVel = b->GetLinearVelocity();
-
-        // Proyectamos la velocidad sobre la direcciÛn frontal (dot product)
         float forwardSpeed = currentVel.x * forwardDir.x + currentVel.y * forwardDir.y;
 
-        // Recalculamos la velocidad conservando SOLO la componente frontal
-        // (El 0.95f permite un 5% de derrape para que no sea totalmente rÌgido)
+        // 2. FRICCI?N LATERAL (SIN DERRAPE)
+        // Sincronizado con KillOrthogonalVelocity de la IA
         b2Vec2 lateralCorrection = { forwardDir.x * forwardSpeed, forwardDir.y * forwardSpeed };
         b->SetLinearVelocity(lateralCorrection);
 
-        // ----------------------------------------------------------------
-        // 2. GIRO SUAVIZADO (STEERING)
-        // ----------------------------------------------------------------
-
+        // 3. GIRO (STEERING)
         float targetRotVelocity = 0.0f;
+        float maxTurnSpeed = CarStats::STEERING_SPEED;
 
-        // Define aquÌ la velocidad m·xima de giro (aseg˙rate de que sea alta, ej: 6.0f)
-        // Si usas la variable de clase 'turn_speed', aseg˙rate de haberla puesto a 6.0f en Start()
-        float maxTurnSpeed = 6.0f;
-
-        // Solo permitimos girar si el coche se est· moviendo un mÌnimo
-        if (abs(forwardSpeed) > 0.5f)
+        if (abs(forwardSpeed) > 0.5f) // M®™nimo de velocidad para girar
         {
-            if (IsKeyDown(KEY_LEFT)) {
-                targetRotVelocity = -maxTurnSpeed;
-            }
-            else if (IsKeyDown(KEY_RIGHT)) {
-                targetRotVelocity = maxTurnSpeed;
-            }
+            if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) targetRotVelocity = -maxTurnSpeed;
+            else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) targetRotVelocity = maxTurnSpeed;
 
-            // Invertir giro si vamos marcha atr·s para control natural
-            if (forwardSpeed < -0.1f) targetRotVelocity *= -1;
+            if (forwardSpeed < -0.1f) targetRotVelocity *= -1; // Invertir en reversa
         }
 
-        // InterpolaciÛn (Suavizado):
-        // 0.1f = Muy suave (lento)
-        // 0.3f = Equilibrado
-        // 1.0f = Instant·neo (brusco)
+        // Sincroniza este valor (0.2f) con la IA si quieres que giren con la misma agilidad
         float turnSmoothing = 0.2f;
-
         float currentRot = b->GetAngularVelocity();
         float newRot = currentRot + (targetRotVelocity - currentRot) * turnSmoothing;
         b->SetAngularVelocity(newRot);
 
-        // ----------------------------------------------------------------
-        // 3. ACELERACI”N Y FRENADO
-        // ----------------------------------------------------------------
+        // 4. ACELERACI?N
+    /*    float maxSpeed = CarStats::MAX_SPEED;*/
 
-        float maxSpeed = 10.0f;
-        // Vector direcciÛn actualizado
-        b2Vec2 direction = forwardDir;
-
-        // Acelerar
-        if (IsKeyDown(KEY_UP))
+        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         {
             if (forwardSpeed < maxSpeed) {
-                b2Vec2 force = { direction.x * speed, direction.y * speed };
+                // 'speed' ya es CarStats::ACCELERATION (asignado en Start)
+                b2Vec2 force = { forwardDir.x * speed, forwardDir.y * speed };
                 b->ApplyForceToCenter(force, true);
             }
         }
 
-        // Marcha atr·s / Frenar
-        if (IsKeyDown(KEY_DOWN))
+        // 5. FRENADO Y REVERSA
+        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
         {
-            if (forwardSpeed > -maxSpeed * 0.5f) { // LÌmite marcha atr·s
-                b2Vec2 force = { direction.x * -speed * 0.5f, direction.y * -speed * 0.5f };
+            if (forwardSpeed > -maxSpeed * 0.5f) {
+                b2Vec2 force = { forwardDir.x * -speed * 0.5f, forwardDir.y * -speed * 0.5f };
                 b->ApplyForceToCenter(force, true);
             }
         }
 
-        // Freno de mano (Espacio)
-        if (IsKeyDown(KEY_SPACE))
-        {
-            // Frena un 5% cada frame
+        // 6. FRICCI?N NATURAL (Cuando no aceleras)
+        if (!IsKeyDown(KEY_UP) && !IsKeyDown(KEY_DOWN) && !IsKeyDown(KEY_SPACE)) {
             b2Vec2 v = b->GetLinearVelocity();
-            v.x *= 0.95f;
-            v.y *= 0.95f;
-            b->SetLinearVelocity(v);
-        }
-
-        // FricciÛn natural (si no aceleras, el coche se para solo poco a poco)
-        if (!IsKeyDown(KEY_UP) && !IsKeyDown(KEY_DOWN)) {
-            b2Vec2 v = b->GetLinearVelocity();
-            v.x *= 0.98f;
+            v.x *= 0.98f; // Sincroniza este 0.98f con la IA
             v.y *= 0.98f;
             b->SetLinearVelocity(v);
         }
     }
 
-    // Nota: El renderizado se mueve a PostUpdate en muchos engines, 
-    // pero si tu estructura lo requiere aquÌ, dÈjalo aquÌ.
-    // He omitido el bloque de renderizado comentado para mantenerlo limpio,
-    // ya que tu cÛdigo original tenÌa uno en PostUpdate tambiÈn.
-
     return UPDATE_CONTINUE;
 }
+
+
 
 update_status ModulePlayer::PostUpdate()
 {
@@ -193,3 +185,14 @@ update_status ModulePlayer::PostUpdate()
     return UPDATE_CONTINUE;
 }
 
+// ModulePlayer.cpp
+void ModulePlayer::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
+{
+    // bodyB  «ÕÊº“◊≤µΩµƒ∂´Œ˜
+    if (bodyB != nullptr && bodyB->ptype == BodyType::BOOST)
+    {
+        boostTimer = 60; // 3√Îº”ÀŸ (ºŸ…Ë60fps)
+        currentMaxSpeed = CarStats::MAX_SPEED +3.0f; // ÀŸ∂»∑≠±∂
+        LOG("BOOST ACTIVE!");
+    }
+}

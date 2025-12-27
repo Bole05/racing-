@@ -452,49 +452,113 @@ bool ModuleMap::Load(const char* path)
                     LOG("Loaded path with %d points", newPath.size());
                 }
 
+            }
 
+        }
 
+        if (name=="Powerups") {
+            for (pugi::xml_node object = objectGroup.child("object"); object; object = object.next_sibling("object")) {
+                std::string type = object.attribute("type").as_string(); // Tiled 的 "Class" 或 "Type" 字段
 
+                // 或者如果使用的是自定义属性，请用这段:
+                /* pugi::xml_node props = object.child("properties");
+                for (pugi::xml_node p = props.child("property"); p; p = p.next_sibling("property")) {
+                    std::string propName = p.attribute("name").as_string();
+                    if (propName == "Type") type = p.attribute("value").as_string();
+                }
+                */
 
+                // 如果检测到是加速带
+                if (type == "Boost")
+                {
+                    int x = object.attribute("x").as_int();
+                    int y = object.attribute("y").as_int();
+                    int width = object.attribute("width").as_int();
+                    int height = object.attribute("height").as_int();
 
+                    // Tiled 的坐标是左上角，Box2D 通常以中心点为原点创建矩形
+                    // 我们需要把坐标偏移到中心
+                    int centerX = x + width / 2;
+                    int centerY = y + height / 2;
+
+                    // 创建传感器 (Sensor)
+                    PhysBody* boost = App->physics->CreateRectangleSensor(centerX, centerY, width, height);
+                    boost->ptype = BodyType::BOOST; // 设置类型
+
+                    // 也可以设置 listener 为 ModulePlayer 或 ModuleGame，以便接收回调
+                    // boost->listener = App->player; 
+
+                    LOG("BOOST");
+                }
 
 
             }
-           /* pugi::xml_node object = objectGroup.child("object");*/
-            // Asumimos que es una Polyline. Tiled guarda los puntos en el atributo "points"
-            // Formato: "0,0 10,10 20,20 ..." relativos a la posici髇 X,Y del objeto
 
-         /*   int originX = object.attribute("x").as_int();
-            int originY = object.attribute("y").as_int();*/
 
-            //pugi::xml_node polyline = object.child("polyline");
-            //std::string pointsString = polyline.attribute("points").as_string();
 
-            //// Parsear el string de puntos
-            //std::stringstream ss(pointsString);
-            //std::string pointData;
 
-          /*  trackPath.clear();*/
 
-            //while (std::getline(ss, pointData, ' ')) // Separar por espacio
-            //{
-            //    size_t commaPos = pointData.find(',');
-            //    if (commaPos != std::string::npos)
-            //    {
-            //        std::string xStr = pointData.substr(0, commaPos);
-            //        std::string yStr = pointData.substr(commaPos + 1);
 
-            //        float x = std::stof(xStr) + originX;
-            //        float y = std::stof(yStr) + originY;
 
-            //        // Convertir de P韝eles a Metros y guardar
-            //        newPath.push_back({ PIXEL_TO_METERS(x), PIXEL_TO_METERS(y) });
-            //    }
-            //}
-            //LOG("AI Path loaded with %d points", trackPath.size());
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+    // -------------------------------------------------------------------------
+        // 5. Cargar Spawn Points (Object Layer llamada "Spawn")
+        // -------------------------------------------------------------------------
+
+        // 重新从 map 节点获取第一个 objectgroup
+    for (pugi::xml_node spawnLayer = mapNode.child("objectgroup"); spawnLayer; spawnLayer = spawnLayer.next_sibling("objectgroup"))
+    {
+        std::string name = spawnLayer.attribute("name").as_string();
+
+        // 只有当这一层的名字叫 "Spawn" 时，才读取里面的对象
+        // (请确保你在 Tiled 软件里把层命名为 "Spawn"，区分大小写)
+        if (name == "Spawn")
+        {
+            for (pugi::xml_node object = spawnLayer.child("object"); object; object = object.next_sibling("object"))
+            {
+                std::string objectName = object.attribute("name").as_string();
+               
+                float x = object.attribute("x").as_float();
+                float y = object.attribute("y").as_float();
+
+                if (objectName == "PlayerStart") // 只有名字完全匹配才设为玩家
+                {
+                    playerSpawnPoint = b2Vec2(x, y); // 存储像素坐标
+                    LOG("Player Spawn found at: %f, %f", x, y);
+                }
+                else if (objectName == "EnemyStart") // 只有名字匹配才加入敌人列表
+                {
+                    enemySpawnPoints.push_back(b2Vec2(x, y));
+                    LOG("Enemy Spawn found at: %f, %f", x, y);
+                }
+
+
+      
+            }
         }
     }
-
 
     LOG("TOTAL PATHS LOADED: %d", trackPaths.size());
     mapLoaded = true;

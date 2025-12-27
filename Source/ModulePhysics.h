@@ -14,6 +14,16 @@
 #define METERS_TO_PIXELS(m) ((int) floor(PIXELS_PER_METER * m))
 #define PIXEL_TO_METERS(p)  ((float) METER_PER_PIXEL * p)
 
+enum BodyType {
+	UNKNOWN = 0,
+	PLAYER,
+	ENEMY,
+	WALL,
+	BOOST
+};
+
+
+
 struct VehicleInfo {
 	int width = 26;
 	int height = 43;
@@ -31,7 +41,7 @@ struct VehicleInfo {
 class PhysBody
 {
 public:
-	PhysBody() : listener(NULL), body(NULL),width(0),height(0)
+	PhysBody() : listener(NULL), body(NULL),width(0),height(0),ptype(UNKNOWN)
 	{}
 
 	//void GetPosition(int& x, int& y) const;
@@ -40,10 +50,11 @@ public:
 	bool Contains(int x, int y) const;
 	int RayCast(int x1, int y1, int x2, int y2, float& normal_x, float& normal_y) const;
 
-public:
+public:	
 	int width, height;
 	b2Body* body;
 	Module* listener;
+	BodyType ptype;
 };
 
 // Module --------------------------------------
