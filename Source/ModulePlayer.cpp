@@ -5,6 +5,8 @@
 #include "ModuleGame.h"
 #include "ModuleMap.h"
 #include "CarProperties.h"
+#include "ModuleRender.h"
+#include<algorithm>
 ModulePlayer::ModulePlayer(Application* app, bool start_enabled) : Module(app, start_enabled)
 {
 }
@@ -194,7 +196,61 @@ update_status ModulePlayer::Update()
             v.y *= 0.98f;
             b->SetLinearVelocity(v);
         }
+        //Get player position
+        int px;
+        int py;
+        pbody->GetPhysicPosition(px,py);
+        // --- 镜头跟随与限制逻辑 (Camera Clamping) ---
+
+              // 1. 获取地图总尺寸 (Tiles * TileSize)
+              // 注意：请检查你的 ModuleMap.h，确认结构体实例名叫 'mapData' 还是 'data'
+        int mapWidth = App->map->mapData.width * App->map->mapData.tileWidth;
+        int mapHeight = App->map->mapData.height * App->map->mapData.tileHeight;
+
+        // 2. 计算当前视野的一半大小 (考虑 Zoom)
+        // 如果 Zoom=2.0，屏幕宽800，那么视野宽只有400，中心点是200
+        float zoom = App->renderer->camera.zoom;
+        float halfScreenW = (GetScreenWidth() / 2.0f) / zoom;
+        float halfScreenH = (GetScreenHeight() / 2.0f) / zoom;
+
+        // 3. 计算允许摄像机移动的最小和最大坐标
+        // 摄像机中心最小不能小于半个屏幕宽
+        float minX = halfScreenW;
+        float minY = halfScreenH;
+        // 摄像机中心最大不能超过 地图宽 - 半个屏幕宽
+        float maxX = mapWidth - halfScreenW;
+        float maxY = mapHeight - halfScreenH;
+
+        // 4. 限制目标点 (Clamping)
+        // 使用 std::clamp 或者手写 if/else
+        float targetX = (float)px;
+        float targetY = (float)py;
+
+        // 如果地图比屏幕还小，就固定在地图中心，防止抖动
+        if (mapWidth < GetScreenWidth() / zoom) {
+            targetX = mapWidth / 2.0f;
+        }
+        else {
+            if (targetX < minX) targetX = minX;
+            if (targetX > maxX) targetX = maxX;
+        }
+
+        if (mapHeight < GetScreenHeight() / zoom) {
+            targetY = mapHeight / 2.0f;
+        }
+        else {
+            if (targetY < minY) targetY = minY;
+            if (targetY > maxY) targetY = maxY;
+        }
+
+        // 5. 应用目标
+        App->renderer->camera.target = { targetX, targetY };
+
+        // 偏移量始终保持屏幕中心
+        App->renderer->camera.offset = { (float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f };
     }
+
+    
 
     return UPDATE_CONTINUE;
 }
@@ -221,13 +277,14 @@ update_status ModulePlayer::PostUpdate()
 
         DrawTexturePro(texture, sourceRec, destRec, origin, rotationDegrees, WHITE);
 
+        EndMode2D();
         //UI boost with space
         int barWidth = 200;
         int barHeight = 20;
         int screenW = GetScreenWidth();
-        int magin = 30;
+        int magin = 80;
         int barX = screenW - barWidth - magin;
-        int barY = magin;
+        int barY = 30;
 
         float percentage = currentBoostCharge / maxBoostCharge;
 
@@ -253,7 +310,7 @@ update_status ModulePlayer::PostUpdate()
         }
 
 
-
+        BeginMode2D(App->renderer->camera);
 
 
     }
