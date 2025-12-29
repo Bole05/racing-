@@ -1,4 +1,0 @@
-C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/zlib_x86-windows/lib/zlib.lib
-C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/zlib_x86-windows/bin/zlib1.dll
-C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/zlib_x86-windows/include/zconf.h
-C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/zlib_x86-windows/include/zlib.h
