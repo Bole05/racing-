@@ -1,0 +1,93 @@
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 5592cda7a74c7aabb9e51e2968d00cc2fb0725c8483ed2436eb77a17fb55132d
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: d11f117d082037c6e3096daf5f6e59d051029bc82052b3652bb3ecac6b043620
+Status: install ok installed
+
+Package: box2d
+Version: 3.1.1
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: 01144516771722fdeee5d2e7733d5ba453a635274e329836d543fce16a414b7f
+Description: An open source C++ engine for simulating rigid bodies in 2D
+Status: install ok installed
+
+Package: libjpeg-turbo
+Version: 3.1.1
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: e5c7b8ccf5b0f2a77b883c4ec6f91bb6557f4d9353122e71c7f1cc59d00bcd6d
+Description: libjpeg-turbo is a JPEG image codec that uses SIMD instructions (MMX, SSE2, NEON, AltiVec) to accelerate baseline JPEG compression and decompression on x86, x86-64, ARM, and PowerPC systems.
+Status: install ok installed
+
+Package: zlib
+Version: 1.3.1
+Depends: vcpkg-cmake:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: 26b165c4fb5a01f6681c753e5a08f23f7605064ecfe7f25c3356a02e7b99d44a
+Description: A compression library
+Status: install ok installed
+
+Package: libpng
+Version: 1.6.50
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows, zlib
+Architecture: x86-windows
+Multi-Arch: same
+Abi: 796108474e67b351ffdba69a4ab389e8e6b5ce09f260c10213d630d823b86cc9
+Description: libpng is a library implementing an interface for reading and writing PNG (Portable Network Graphics) format files
+Status: install ok installed
+
+Package: pugixml
+Version: 1.15
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: 24de2e1fed58a20d8705b933f4d38540f8f6bde88e9b6b8b29b4eb45bed961bf
+Description: Light-weight, simple and fast XML parser for C++ with XPath support
+Status: install ok installed
+
+Package: sdl3
+Version: 3.2.22
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: 19ff2edd465e0db1693804c91f1ece3ecfca6a48de42fa8296d6124ed51f870a
+Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+Status: install ok installed
+
+Package: sdl3-image
+Version: 3.2.4
+Depends: sdl3, vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
+Architecture: x86-windows
+Multi-Arch: same
+Abi: e99678fde9db72e10f0fe86b580abd6a94d06fc634b1e2bdcc600e7641fe2745
+Description: SDL_image is an image file loading library. It loads images as SDL surfaces and textures, and supports the following formats: BMP, GIF, JPEG, LBM, PCX, PNG, PNM, TGA, TIFF, WEBP, XCF, XPM, XV
+Status: install ok installed
+
+Package: sdl3-image
+Feature: jpeg
+Depends: libjpeg-turbo
+Architecture: x86-windows
+Multi-Arch: same
+Description: Support for JPEG image format
+Status: install ok installed
+
+Package: sdl3-image
+Feature: png
+Depends: libpng
+Architecture: x86-windows
+Multi-Arch: same
+Description: Support for PNG image format
+Status: install ok installed
+

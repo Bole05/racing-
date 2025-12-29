@@ -1,0 +1,9 @@
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/pugixml.lib
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/bin/pugixml.dll
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/cmake/pugixml/pugixml-targets.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/cmake/pugixml/pugixml-targets-debug.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/cmake/pugixml/pugixml-config-version.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/cmake/pugixml/pugixml-config.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/lib/pkgconfig/pugixml.pc
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/include/pugiconfig.hpp
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/pugixml_x86-windows/debug/include/pugixml.hpp

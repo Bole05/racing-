@@ -74,6 +74,14 @@ update_status ModulePlayer::Update()
 {
     if (App->game != nullptr && App->game->game_over == true) return UPDATE_CONTINUE;
 
+    if (App->game != nullptr && App->game->game_over == true) {
+        if (pbody != nullptr && pbody->body != nullptr) {
+            pbody->body->SetLinearVelocity({ 0, 0 });
+            pbody->body->SetAngularVelocity(0);
+        }
+        return UPDATE_CONTINUE;
+    }
+
     if (pbody != nullptr)
     {
         // 1. 处理加速计时逻辑
@@ -128,6 +136,13 @@ update_status ModulePlayer::Update()
 
         // 4. ACELERACI?N
     /*    float maxSpeed = CarStats::MAX_SPEED;*/
+
+        if (IsKeyPressed(KEY_SPACE) && boostTimer <= 0) // IsKeyPressed para que solo se active una vez por pulsaci髇
+        {
+            boostTimer = 120; // 2 segundos a 60 FPS
+            currentMaxSpeed = CarStats::MAX_SPEED * 1.5f; // Aumentamos la velocidad m醲ima (ejemplo: x1.5)
+            LOG("BOOST ACTIVADO CON ESPACIO!");
+        }
 
         if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         {

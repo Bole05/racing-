@@ -1,0 +1,10 @@
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/lib/SDL3_image.lib
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/bin/SDL3_image.dll
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/include/SDL3_image/SDL_image.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/bin/SDL3_image.pdb
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/cmake/SDL3_imageConfig.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/cmake/SDL3_imageConfigVersion.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/cmake/SDL3_image-shared-targets.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/cmake/SDL3_image-shared-targets-release.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/lib/pkgconfig/sdl3-image.pc
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/sdl3-image_x86-windows/share/licenses/SDL3_image/LICENSE.txt

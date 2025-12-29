@@ -1,0 +1,17 @@
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/libpng16.lib
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/bin/libpng16.dll
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/png.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/pngconf.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/pnglibconf.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/libpng16/png.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/libpng16/pngconf.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/include/libpng16/pnglibconf.h
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/pkgconfig/libpng16.pc
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/libpng/libpng16.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/libpng/libpng16-release.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/libpng16.lib
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/bin/libpng16.dll
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/cmake/PNG/PNGTargets.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/cmake/PNG/PNGTargets-release.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/cmake/PNG/PNGConfig.cmake
+C:/Users/Bolew/Documents/GitHub/racing-/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/lib/cmake/PNG/PNGConfigVersion.cmake
