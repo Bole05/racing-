@@ -29,7 +29,7 @@ struct EnemyCar {
 
 
     // Métodos helper
-   
+    //void Init(PhysBody* body, int startPathIndex,int pathIndex);
     void Init(PhysBody* body, int startPathIndex, int pathIndex);
 };
 
