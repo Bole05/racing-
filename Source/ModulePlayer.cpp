@@ -82,6 +82,9 @@ bool ModulePlayer::CleanUp()
 }
 update_status ModulePlayer::Update()
 {
+    float currentSpeed = pbody->body->GetLinearVelocity().Length();
+    bool showNotReadyWarning = false;
+
     if (App->game != nullptr && App->game->game_over == true) return UPDATE_CONTINUE;
 
     if (App->game != nullptr && App->game->game_over == true) {
@@ -90,6 +93,25 @@ update_status ModulePlayer::Update()
             pbody->body->SetAngularVelocity(0);
         }
         return UPDATE_CONTINUE;
+    }
+
+    if (boostTimer > 0)
+    {
+        boostTimer--;
+
+        // Calculamos cuánto debe bajar la barra en cada frame
+        // Si el boost dura 120 frames, restamos 1/120 de la barra cada vez
+        float depletionSpeed = maxBoostCharge / 20.0f;
+        currentBoostCharge -= depletionSpeed;
+
+        // Evitamos que baje de 0
+        if (currentBoostCharge < 0) currentBoostCharge = 0.0f;
+
+        if (boostTimer == 0)
+        {
+            currentMaxSpeed = CarStats::MAX_SPEED;
+            LOG("Boost finalizado - Velocidad normal");
+        }
     }
 
     if (pbody != nullptr)
@@ -113,7 +135,15 @@ update_status ModulePlayer::Update()
             }
         }
 
+        if (IsKeyPressed(KEY_H)) {
+            showHelpMenu = !showHelpMenu;
+        }
 
+        // Si el menú está abierto, "paramos" el juego devolviendo UPDATE_CONTINUE 
+        // pero saltándonos toda la lógica de físicas y movimiento de abajo.
+        if (showHelpMenu) return UPDATE_CONTINUE;
+
+        if (App->game != nullptr && App->game->game_over == true) return UPDATE_CONTINUE;
 
 
 
@@ -163,13 +193,37 @@ update_status ModulePlayer::Update()
         // 4. ACELERACI?N
     /*    float maxSpeed = CarStats::MAX_SPEED;*/
 
-        if (IsKeyPressed(KEY_SPACE) && boostTimer <= 0&&currentBoostCharge>=maxBoostCharge) // IsKeyPressed para que solo se active una vez por pulsación
+        //if (IsKeyPressed(KEY_SPACE) && boostTimer <= 0&&currentBoostCharge>=maxBoostCharge) // IsKeyPressed para que solo se active una vez por pulsación
+        //{
+        //    boostTimer = 120; // 2 segundos a 60 FPS
+        //    currentMaxSpeed = CarStats::MAX_SPEED * 1.5f; // Aumentamos la velocidad máxima (ejemplo: x1.5)
+        //    currentBoostCharge = 0.0f;
+        //    LOG("BOOST ACTIVADO! Change reset");
+        //}
+
+        if (IsKeyPressed(KEY_SPACE))
         {
-            boostTimer = 120; // 2 segundos a 60 FPS
-            currentMaxSpeed = CarStats::MAX_SPEED * 1.5f; // Aumentamos la velocidad máxima (ejemplo: x1.5)
-            currentBoostCharge = 0.0f;
-            LOG("BOOST ACTIVADO! Change reset");
+            if (currentBoostCharge >= maxBoostCharge && boostTimer <= 0)
+            {
+                // ACTIVACIÓN EXITOSA
+                boostTimer = 120; // 2 segundos
+                currentMaxSpeed = CarStats::MAX_SPEED * 3.5f;
+                LOG("BOOST ACTIVADO!");
+            }
+            else if (boostTimer <= 0)
+            {
+                // EL JUGADOR PULSÓ PERO NO ESTÁ LLENO
+                showNotReadyWarning = true;
+                LOG("Boost no preparado");
+            }
         }
+
+        if (IsKeyPressed(KEY_SPACE) && currentBoostCharge < maxBoostCharge && boostTimer <= 0)
+        {
+            warningTimer = 60; // El mensaje durará 60 frames (1 segundo)
+        }
+
+        if (warningTimer > 0) warningTimer--;
 
         if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         {
@@ -202,52 +256,54 @@ update_status ModulePlayer::Update()
         pbody->GetPhysicPosition(px,py);
         // --- ¾µÍ·¸úËæÓëÏŞÖÆÂß¼­ (Camera Clamping) ---
 
-              // 1. »ñÈ¡µØÍ¼×Ü³ß´ç (Tiles * TileSize)
-              // ×¢Òâ£ºÇë¼ì²éÄãµÄ ModuleMap.h£¬È·ÈÏ½á¹¹ÌåÊµÀıÃû½Ğ 'mapData' »¹ÊÇ 'data'
+   // 2. »ñÈ¡µØÍ¼µÄ×Ü¿í¸ß (µ¥Î»£ºÏñËØ)
+        // mapData.width ÊÇ¸ñ×ÓµÄÊıÁ¿£¬tileWidth ÊÇÒ»¸ö¸ñ×ÓµÄÏñËØ¿í
         int mapWidth = App->map->mapData.width * App->map->mapData.tileWidth;
         int mapHeight = App->map->mapData.height * App->map->mapData.tileHeight;
 
-        // 2. ¼ÆËãµ±Ç°ÊÓÒ°µÄÒ»°ë´óĞ¡ (¿¼ÂÇ Zoom)
-        // Èç¹û Zoom=2.0£¬ÆÁÄ»¿í800£¬ÄÇÃ´ÊÓÒ°¿íÖ»ÓĞ400£¬ÖĞĞÄµãÊÇ200
+        // 3. »ñÈ¡ÆÁÄ»³ß´çºÍµ±Ç°µÄËõ·Å±¶ÂÊ
+        float screenW = (float)GetScreenWidth();
+        float screenH = (float)GetScreenHeight();
         float zoom = App->renderer->camera.zoom;
-        float halfScreenW = (GetScreenWidth() / 2.0f) / zoom;
-        float halfScreenH = (GetScreenHeight() / 2.0f) / zoom;
 
-        // 3. ¼ÆËãÔÊĞíÉãÏñ»úÒÆ¶¯µÄ×îĞ¡ºÍ×î´ó×ø±ê
-        // ÉãÏñ»úÖĞĞÄ×îĞ¡²»ÄÜĞ¡ÓÚ°ë¸öÆÁÄ»¿í
-        float minX = halfScreenW;
-        float minY = halfScreenH;
-        // ÉãÏñ»úÖĞĞÄ×î´ó²»ÄÜ³¬¹ı µØÍ¼¿í - °ë¸öÆÁÄ»¿í
-        float maxX = mapWidth - halfScreenW;
-        float maxY = mapHeight - halfScreenH;
+        // 4. ¼ÆËã¡°ÊÓÒ°µÄÒ»°ë¡±ÓĞ¶à´ó (ÔÚµØÍ¼ÊÀ½çÖĞµÄ³ß´ç)
+        // ±ÈÈçÆÁÄ»¿í800£¬Ëõ·Å1.0£¬ÄÇÊÓÒ°°ë¾¶¾ÍÊÇ400¡£Èç¹ûËõ·Å2.0£¬ÊÓÒ°°ë¾¶¾ÍÊÇ200¡£
+        float halfViewW = (screenW / 2.0f) / zoom;
+        float halfViewH = (screenH / 2.0f) / zoom;
 
-        // 4. ÏŞÖÆÄ¿±êµã (Clamping)
-        // Ê¹ÓÃ std::clamp »òÕßÊÖĞ´ if/else
-        float targetX = (float)px;
-        float targetY = (float)py;
+        // 5. ¼ÆËãÄ¿±êÎ»ÖÃ£¬µ«Ôö¼ÓÏŞÖÆ (Clamping)
+        Vector2 target;
+        target.x = (float)px;
+        target.y = (float)py;
 
-        // Èç¹ûµØÍ¼±ÈÆÁÄ»»¹Ğ¡£¬¾Í¹Ì¶¨ÔÚµØÍ¼ÖĞĞÄ£¬·ÀÖ¹¶¶¶¯
-        if (mapWidth < GetScreenWidth() / zoom) {
-            targetX = mapWidth / 2.0f;
+        // --- XÖáÏŞÖÆ ---
+        // Ö»ÓĞµ±µØÍ¼±ÈÆÁÄ»¿íÊ±²ÅÏŞÖÆ£¬·ñÔò¾Í¾ÓÖĞ
+        if (mapWidth > screenW / zoom) {
+            // Èç¹ûÍæ¼ÒÌ«¿¿×ó£¬Ïà»úÍ£ÔÚ×î×ó±ß (halfViewW)
+            if (target.x < halfViewW) target.x = halfViewW;
+            // Èç¹ûÍæ¼ÒÌ«¿¿ÓÒ£¬Ïà»úÍ£ÔÚ×îÓÒ±ß (µØÍ¼×Ü¿í - halfViewW)
+            else if (target.x > mapWidth - halfViewW) target.x = mapWidth - halfViewW;
         }
         else {
-            if (targetX < minX) targetX = minX;
-            if (targetX > maxX) targetX = maxX;
+            target.x = mapWidth / 2.0f; // µØÍ¼Ì«Ğ¡£¬Ö±½Ó¾ÓÖĞ
         }
 
-        if (mapHeight < GetScreenHeight() / zoom) {
-            targetY = mapHeight / 2.0f;
+        // --- YÖáÏŞÖÆ ---
+        if (mapHeight > screenH / zoom) {
+            // Èç¹ûÍæ¼ÒÌ«¿¿ÉÏ
+            if (target.y < halfViewH) target.y = halfViewH;
+            // Èç¹ûÍæ¼ÒÌ«¿¿ÏÂ
+            else if (target.y > mapHeight - halfViewH) target.y = mapHeight - halfViewH;
         }
         else {
-            if (targetY < minY) targetY = minY;
-            if (targetY > maxY) targetY = maxY;
+            target.y = mapHeight / 2.0f; // µØÍ¼Ì«Ğ¡£¬Ö±½Ó¾ÓÖĞ
         }
 
-        // 5. Ó¦ÓÃÄ¿±ê
-        App->renderer->camera.target = { targetX, targetY };
+        // 6. Ó¦ÓÃÄ¿±êÎ»ÖÃ
+        App->renderer->camera.target = target;
 
-        // Æ«ÒÆÁ¿Ê¼ÖÕ±£³ÖÆÁÄ»ÖĞĞÄ
-        App->renderer->camera.offset = { (float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f };
+        // Æ«ÒÆÁ¿ÓÀÔ¶ÊÇÆÁÄ»ÖĞĞÄ (ÒòÎªÎÒÃÇÒª°Ñ target ·ÅÔÚÆÁÄ»ÖĞ¼äÏÔÊ¾)
+        App->renderer->camera.offset = { screenW / 2.0f, screenH / 2.0f };
     }
 
     
@@ -259,6 +315,11 @@ update_status ModulePlayer::Update()
 
 update_status ModulePlayer::PostUpdate()
 {
+    //if (App->game == nullptr) return UPDATE_CONTINUE;
+    //if (App->game->current_state == START_MENU) {
+    //    // (Aquí va tu código de dibujo de menu_img que pusimos antes)
+    //    return UPDATE_CONTINUE;
+    //}
     if (pbody != nullptr)
     {
         // --- RENDERIZADO (RAYLIB) ---
@@ -309,9 +370,74 @@ update_status ModulePlayer::PostUpdate()
             DrawRectangle(barX,barY,barWidth,barHeight,RED);
         }
 
+        if (warningTimer > 0)
+        {
+            // Lo dibujamos cerca de la barra o en el centro
+            DrawText("BOOST NO PREPARADO", barX - 20, barY + 45, 25, BLUE);
+        }
+
+        // Asegúrate de que este bloque se mantenga para ver cuando SÍ funciona
+        if (percentage >= 1.0f && boostTimer <= 0) {
+            DrawText("Boost Ready [SPACE]", barX, barY + 25, 25, BLUE);
+        }
+
+        if (showHelpMenu) {
+            int screenW = GetScreenWidth();
+            int screenH = GetScreenHeight();
+
+            // 1. Dibujar un fondo oscuro semitransparente que cubra toda la pantalla
+            DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.6f));
+
+            // 2. Dibujar la "ventana" central
+            int winW = 400;
+            int winH = 300;
+            int winX = (screenW - winW) / 2;
+            int winY = (screenH - winH) / 2;
+
+            DrawRectangle(winX, winY, winW, winH, RAYWHITE);
+            DrawRectangleLines(winX, winY, winW, winH, DARKGRAY);
+
+            // 3. Dibujar el texto de los controles
+            DrawText("CONTROLES DEL JUGADOR", winX + 50, winY + 30, 20, MAROON);
+
+            DrawText("- W / Flecha Arriba: Acelerar", winX + 40, winY + 80, 18, DARKGRAY);
+            DrawText("- S / Flecha Abajo: Frenar/Reversa", winX + 40, winY + 110, 18, DARKGRAY);
+            DrawText("- A-D / Flechas Izq-Der: Girar", winX + 40, winY + 140, 18, DARKGRAY);
+            DrawText("- ESPACIO: Activar Boost (si está lleno)", winX + 40, winY + 170, 18, DARKGRAY);
+            DrawText("- H: Cerrar este menu", winX + 40, winY + 210, 18, BLUE);
+
+            DrawText("EL JUEGO ESTA EN PAUSA", winX + 80, winY + 260, 15, RED);
+        }
+
+        if (pbody != nullptr)
+        {
+            // 1. Obtener la velocidad actual (magnitud del vector)
+            float speedVal = pbody->body->GetLinearVelocity().Length();
+
+            // 2. Convertir a una cadena de texto (multiplicamos por 10 para que el número sea más vistoso)
+            static char speedText[32];
+            sprintf_s(speedText, 32, "VELOCIDAD: %.1f KM/H", speedVal * 9.0f);
+
+            // 3. Definir posición en pantalla (por ejemplo, esquina inferior derecha)
+            int screenW = GetScreenWidth();
+            int screenH = GetScreenHeight();
+            int posX = screenW - 250;
+            int posY = screenH - 50;
+
+            // 4. Dibujar un pequeño fondo para el texto
+            DrawRectangle(posX - 10, posY - 5, 230, 30, Fade(BLACK, 0.5f));
+
+            // 5. Dibujar el texto de velocidad
+            // Si la velocidad es alta (por boost), la pintamos en un color diferente
+            Color velocityColor = (boostTimer > 0) ? GOLD : WHITE;
+            DrawText(speedText, posX, posY, 20, velocityColor);
+        }
+
+
 
         BeginMode2D(App->renderer->camera);
 
+        
 
     }
 
@@ -319,13 +445,26 @@ update_status ModulePlayer::PostUpdate()
 }
 
 // ModulePlayer.cpp
+//void ModulePlayer::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
+//{
+//    // bodyB ÊÇÍæ¼Ò×²µ½µÄ¶«Î÷
+//    if (bodyB != nullptr && bodyB->ptype == BodyType::BOOST)
+//    {
+//        boostTimer = 60; // 3Ãë¼ÓËÙ (¼ÙÉè60fps)
+//        currentMaxSpeed = CarStats::MAX_SPEED +3.0f; // ËÙ¶È·­±¶
+//        LOG("BOOST ACTIVE!");
+//    }
+//}
+
 void ModulePlayer::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    // bodyB ÊÇÍæ¼Ò×²µ½µÄ¶«Î÷
     if (bodyB != nullptr && bodyB->ptype == BodyType::BOOST)
     {
-        boostTimer = 60; // 3Ãë¼ÓËÙ (¼ÙÉè60fps)
-        currentMaxSpeed = CarStats::MAX_SPEED +3.0f; // ËÙ¶È·­±¶
-        LOG("BOOST ACTIVE!");
+        // Si no quieres que afecte al timer de la barra, 
+        // podrías aplicar un impulso directo o usar una variable diferente.
+        // Si solo quieres velocidad sin que la barra se vea afectada, quita el boostTimer aquí:
+        currentMaxSpeed = CarStats::MAX_SPEED + 2.0f;
+        // boostTimer = 60; <-- Elimina o comenta esta línea para que no afecte a la barra
+        LOG("BOOST SUELO ACTIVO!");
     }
 }
